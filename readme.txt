@@ -25,5 +25,8 @@ The InvoiceXpress Extension for WooCommerce allows you to invoice your clients v
 
 == Changelog ==
 
+= 2.0 =
+* Several fixes and general cleanup
+
 = 1.0 =
 * Initial release.

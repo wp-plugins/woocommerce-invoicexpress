@@ -33,9 +33,7 @@ if (is_woocommerce_active()) {
 			add_action('admin_menu',array(&$this,'menu'));
 			//add_action('woocommerce_checkout_order_processed',array(&$this,'process')); // Check if user is InvoiceXpress client (create if not) and create invoice.
 			
-			add_action('woocommerce_order_status_processing',array(&$this,'process'));
-			add_action('woocommerce_payment_complete',array(&$this,'payment')); // Check if user is InvoiceXpress client (create if not) and create invoice.
-	
+			add_action('woocommerce_order_status_processing',array(&$this,'process'));	
 		}
 		
 		function menu() {
@@ -49,7 +47,7 @@ if (is_woocommerce_active()) {
 			$settings = array(
 					array(
 							'name'		=> 'wc_ie_settings',
-							'title' 	=> __('InvoiceXpress Settings','wc_invoicexpress'),
+							'title' 	=> __('InvoiceXpress for WooCommerce Settings','wc_invoicexpress'),
 							'page'		=> 'woocommerce_invoicexpress',
 							'settings'	=> array(
 									array(
@@ -61,10 +59,6 @@ if (is_woocommerce_active()) {
 											'title'		=> __('API Token','wc_invoicexpress'),
 									),
 									array(
-											'name'		=> 'wc_ie_create_client',
-											'title'		=> __('Create Client','wc_invoicexpress'),
-									),
-									array(
 											'name'		=> 'wc_ie_create_invoice',
 											'title'		=> __('Create Invoice','wc_invoicexpress'),
 									),
@@ -73,17 +67,9 @@ if (is_woocommerce_active()) {
 											'title'		=> __('Send Invoice','wc_invoicexpress'),
 									),
 									array(
-											'name'		=> 'wc_ie_add_payments',
-											'title'		=> __('Add Payments','wc_invoicexpress'),
-									),
-									array(
-											'name'		=> 'wc_ie_send_method',
-											'title'		=> __('Invoice Send Method','wc_invoicexpress'),
-									),
-									array(
-											'name'		=> 'wc_ie_inv_num_prefix',
-											'title'		=> __('Invoice Number Prefix','wc_invoicexpress'),
-									),
+											'name'		=> 'wc_ie_create_simplified_invoice',
+											'title'		=> __('Create Simplified Invoice','wc_invoicexpress'),
+									)
 							),
 					),
 			);
@@ -101,48 +87,34 @@ if (is_woocommerce_active()) {
 		
 		
 		function wc_ie_settings() {
-			echo '<p>'.__('You can find this information in the "Settings > API" section of your InvoiceXpress account.','wc_invoicexpress').'</p>';
+			echo '<p>'.__('Please fill in the necessary settings below. InvoiceXpress for WooCommerce works by creating an invoice when order status is updated to processing.','wc_invoicexpress').'</p>';
 		}
 		function wc_ie_subdomain() {
 			echo '<input type="text" name="wc_ie_subdomain" id="wc_ie_subdomain" value="'.get_option('wc_ie_subdomain').'" />';
+			echo ' <label for="wc_ie_subdomain">When you access InvoiceXpress you use https://<b>subdomain</b>.invoicexpress.net</label>';
 		}
 		function wc_ie_api_token() {
 			echo '<input type="password" name="wc_ie_api_token" id="wc_ie_api_token" value="'.get_option('wc_ie_api_token').'" />';
-		}
-		function wc_ie_create_client() {
-			$checked = (get_option('wc_ie_create_client')==1) ? 'checked="checked"' : '';
-			echo '<input type="hidden" name="wc_ie_create_client" value="0" />';
-			echo '<input type="checkbox" name="wc_ie_create_client" id="wc_ie_create_client" value="1" '.$checked.' />';
+			echo ' <label for="wc_ie_api_token">Go to Settings >> API in InvoiceXpress to get one.</label>';
 		}
 		function wc_ie_create_invoice() {
 			$checked = (get_option('wc_ie_create_invoice')==1) ? 'checked="checked"' : '';
 			echo '<input type="hidden" name="wc_ie_create_invoice" value="0" />';
 			echo '<input type="checkbox" name="wc_ie_create_invoice" id="wc_ie_create_invoice" value="1" '.$checked.' />';
+			echo ' <label for="wc_ie_create_invoice">Create invoices for orders that come in, otherwise only the client is created (<i>recommended</i>).</label>';
 		}
 		function wc_ie_send_invoice() {
 			$checked = (get_option('wc_ie_send_invoice')==1) ? 'checked="checked"' : '';
 			echo '<input type="hidden" name="wc_ie_send_invoice" value="0" />';
 			echo '<input type="checkbox" name="wc_ie_send_invoice" id="wc_ie_send_invoice" value="1" '.$checked.' />';
+			echo ' <label for="wc_ie_send_invoice">Send the client an e-mail with the order invoice attached (<i>recommended</i>).</label>';
 		}
-		function wc_ie_add_payments() {
-			$checked = (get_option('wc_ie_add_payments')==1) ? 'checked="checked"' : '';
-			echo '<input type="hidden" name="wc_ie_add_payments" value="0" />';
-			echo '<input type="checkbox" name="wc_ie_add_payments" id="wc_ie_add_payments" value="1" '.$checked.' />';
-		}
-		function wc_ie_send_method() {
-			$options = array(
-					'Email' => __('Email','wc_invoicexpress'),
-					'SnailMail' => __('Snail Mail','wc_invoicexpress'),
-			);
-			echo '<select name="wc_ie_send_method">';
-			foreach($options as $option=>$title) {
-				$checked = (get_option('wc_ie_send_method')==$option) ? 'selected="selected"' : '';
-				echo '<option value="'.$option.'" '.$checked.'>'.$title.'</option>';
-			}
-			echo '</select>';
-		}
-		function wc_ie_inv_num_prefix() {
-			echo '<input type="text" name="wc_ie_inv_num_prefix" id="wc_ie_inv_num_prefix" value="'.get_option('wc_ie_inv_num_prefix').'" />';
+
+		function wc_ie_create_simplified_invoice() {
+			$checked = (get_option('wc_ie_create_simplified_invoice')==1) ? 'checked="checked"' : '';
+			echo '<input type="hidden" name="wc_ie_create_simplified_invoice" value="0" />';
+			echo '<input type="checkbox" name="wc_ie_create_simplified_invoice" id="wc_ie_create_simplified_invoice" value="1" '.$checked.' />';
+			echo ' <label for="wc_ie_create_simplified_invoice">Create simplified invoices. Only available for Portuguese accounts.</label>';
 		}
 		
 		
@@ -159,35 +131,29 @@ if (is_woocommerce_active()) {
 		<?php }
 		
 		function process($order_id) {
-		
-			error_log("estou aqui process");
 			
 			InvoiceXpressRequest::init($this->subdomain, $this->token);
 		
-			$order = new woocommerce_order($order_id);
+			$order = new WC_Order($order_id);
 		
 			$client_id = get_user_meta($order->user_id, 'wc_ie_client_id', true);
 			$client_name = $order->billing_first_name." ".$order->billing_last_name;
 			
 			// Lets get the user's InvoiceXpress data
-			if($client_id == '' && get_option('wc_ie_create_client')==1) {
+			if($client_id == '') {
 				$data = array(
 						'client' => array(
 								'name'			=> $client_name,
-								//'organization'	=> $order->billing_company,
 								'email'			=> $order->billing_email,
 								'phone'			=> $order->billing_phone,
 								'address'		=> $order->billing_address_1."\n".
 												   $order->billing_address_2."\n",								
-								//'p_street2'		=> $order->billing_address_2,
-								//'p_city'		=> $order->billing_city,
-								//'p_state'		=> $order->billing_state,
 								'postal_code'	=> $order->billing_postcode . " - " . $order->billing_city,
-								'country'		=> 'Portugal',
+								'country'		=> $order->billing_country,
 								'send_options'	=> 1
 						),
 				);
-				error_log("clients.create");
+				//error_log("clients.create");
 
 				$client = new InvoiceXpressRequest('clients.create');
 				$client->post($data);
@@ -201,7 +167,6 @@ if (is_woocommerce_active()) {
 					$order->add_order_note(__('InvoiceXpress Client (Create) API Error','wc_invoicexpress').': '.$client->getError());
 				}
 			} else {
-				error_log("clients.get");
 				$client = new InvoiceXpressRequest('clients.get');
 				$client->post($data);
 				$client->request($client_id);
@@ -217,25 +182,16 @@ if (is_woocommerce_active()) {
 			
 			if(intval($client_id) > 0) {
 				if(get_option('wc_ie_create_invoice')==1) {
-					foreach($order->get_items() as $item) {
-						$debug = print_r($item, true);
-						error_log("Carrinho = ".$debug);
+					foreach($order->get_items() as $item) {						
+						$pid = $item['item_meta']['_product_id'][0];
+						
+						$prod = get_product($pid);
 						
 						$items[] = array(
 								'name'			=> $item['name'],
 								'description'	=> '('.$item['qty'].') '.$item['name'],
-								'unit_price'		=> $item['line_total'],
-								'quantity'		=> 1,
-								'unit'			=> 'unit',
-								'tax'			=> array(
-										'name'	=> 'IVA23'
-								)
-						);
-						$items[] = array(
-								'name'			=> 'Manuseamento e Transporte',
-								'description'	=> 'Manuseamento e Transporte',
-								'unit_price'	=> $order->get_shipping(),
-								'quantity'		=> 1,
+								'unit_price'		=> $prod->price,
+								'quantity'		=> $item['qty'],
 								'unit'			=> 'unit',
 								'tax'			=> array(
 										'name'	=> 'IVA23'
@@ -243,27 +199,33 @@ if (is_woocommerce_active()) {
 						);
 					}	
 					
-					
-					/*
-					$items[] = array(
-							'description'	=> 'Taxes',
-							'unit_cost'		=> $order->get_total_tax(),
-							'quantity'		=> 1,
-					);*/
-					$data = array(
-							'simplified_invoice' => array(
-									'date'	=> $order->completed_date,
-									'client' => array( 'name' => $client_name, 'code' => $client_id ),
-									'items'		=> array(
-											'item'	=> $items
-									)
-							)
-					);
-					
-					// @TODO: invoice number prefix
-					//if(get_option('wc_ie_inv_num_prefix') != '') $data['invoice']['number'] = get_option('wc_ie_inv_num_prefix').$order_id;
-
-					$invoice = new InvoiceXpressRequest('simplified_invoices.create');
+					if(get_option('wc_ie_create_simplified_invoice')==1) {
+						$data = array(
+								'simplified_invoice' => array(
+										'date'	=> $order->completed_date,
+										'client' => array( 'name' => $client_name, 'code' => $client_id ),
+										'items'		=> array(
+												'item'	=> $items
+										)
+								)
+						);
+					} else {
+						$data = array(
+								'invoice' => array(
+										'date'	=> $order->completed_date,
+										'client' => array( 'name' => $client_name, 'code' => $client_id ),
+										'items'		=> array(
+												'item'	=> $items
+										)
+								)
+						);
+					}
+										
+					if(get_option('wc_ie_create_simplified_invoice')==1) {
+						$invoice = new InvoiceXpressRequest('simplified_invoices.create');						
+					} else {
+						$invoice = new InvoiceXpressRequest('invoices.create');
+					}
 		
 					$invoice->post($data);
 					$invoice->request();
@@ -274,7 +236,11 @@ if (is_woocommerce_active()) {
 						add_post_meta($order_id, 'wc_ie_inv_num', $invoice_id, true);
 						
 						// extra request to change status to final
-						$invoice = new InvoiceXpressRequest('simplified_invoices.change-state');
+						if(get_option('wc_ie_create_simplified_invoice')==1) {
+							$invoice = new InvoiceXpressRequest('simplified_invoices.change-state');
+						} else {
+							$invoice = new InvoiceXpressRequest('invoices.change-state');
+						}
 						$data = array('invoice' => array('state'	=> 'finalized'));
 						$invoice->post($data);
 						$invoice->request($invoice_id);
@@ -291,51 +257,27 @@ if (is_woocommerce_active()) {
 											'email' => $order->billing_email,
 											'save' => 1
 											),
-									'subject' => 'PopyBox Factura de Pagamento',
-									'body' => 'Por favor encontre a sua factura em anexo. Pode guardar este documento como prova do seu pagamento. Obrigado.'									
+									'subject' => __('Order Invoice','wc_invoicexpress'),
+									'body' => __('Please find your invoice in attach. Archive this e-mail as proof of payment.','wc_invoicexpress')
 									)
 							);
 		
-					$send_invoice = new InvoiceXpressRequest('simplified_invoices.email-invoice');
+					if(get_option('wc_ie_create_simplified_invoice')==1) {
+						$send_invoice = new InvoiceXpressRequest('simplified_invoices.email-invoice');
+					} else {
+						$send_invoice = new InvoiceXpressRequest('invoices.email-invoice');
+					}
 					$send_invoice->post($data);
 					$send_invoice->request($invoice_id);
 					
 					if($send_invoice->success()) {
 						$response = $send_invoice->getResponse();
-						$order->add_order_note(__('Client invoice sent from InvoiceXpress','wc_invoicexpress').' ('.get_option('wc_ie_send_method').')');
+						$order->add_order_note(__('Client invoice sent from InvoiceXpress','wc_invoicexpress'));
 					} else {
 						$order->add_order_note(__('InvoiceXpress Send Invoice API Error','wc_invoicexpress').': '.$send_invoice->getError());
 					}
 				}
 				
-			}
-		}
-		
-		function payment($order_id) {
-			InvoiceXpressRequest::init($this->subdomain, $this->token);
-			$order = new woocommerce_order ($order_id);
-		
-			$invoice_id = get_post_meta($order_id,'wc_ie_inv_num',true);
-		
-			if(get_option('wc_ie_add_payments')==1 && isset($invoice_id) && $invoice_id != '') {
-				$data = array(
-						'payment' => array(
-								'invoice_id'	=> $invoice_id,
-								'amount'		=> $order->order_total,
-								'type'			=> 'Credit'
-						),
-				);
-				$payment = new InvoiceXpressRequest('payment.create');
-		
-				$payment->post($data);
-				$payment->request();
-				if($payment->success()) {
-					$response = $payment->getResponse();
-					$payment_id = $response['payment_id'];
-					$order->add_order_note(__('Payment posted to InvoiceXpress','wc_invoicexpress').' #'.$payment_id);
-				} else {
-					$order->add_order_note(__('InvoiceXpress Payment API Error','wc_invoicexpress').': '.$payment->getError());
-				}
 			}
 		}
 		

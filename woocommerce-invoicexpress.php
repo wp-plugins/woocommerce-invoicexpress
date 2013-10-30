@@ -139,6 +139,10 @@ if (is_woocommerce_active()) {
 			$client_id = get_user_meta($order->user_id, 'wc_ie_client_id', true);
 			$client_name = $order->billing_first_name." ".$order->billing_last_name;
 			
+			$countries = new WC_Countries();
+			$countries_list = $countries->countries;
+			$country = $countries_list[$order->billing_country];
+			
 			// Lets get the user's InvoiceXpress data
 			if($client_id == '') {
 				$data = array(
@@ -149,7 +153,7 @@ if (is_woocommerce_active()) {
 								'address'		=> $order->billing_address_1."\n".
 												   $order->billing_address_2."\n",								
 								'postal_code'	=> $order->billing_postcode . " - " . $order->billing_city,
-								'country'		=> $order->billing_country,
+								'country'		=> $country,
 								'send_options'	=> 1
 						),
 				);

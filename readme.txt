@@ -3,7 +3,7 @@ Contributors: nunomorgadinho, aaires, widgilabs
 Tags: woocommerce, invoice, invoicing, invoicexpress, ecommerce
 Requires at least: 3.0
 Tested up to: 3.5.x
-Stable tag: trunk
+Stable tag: 0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,8 +25,11 @@ The InvoiceXpress Extension for WooCommerce allows you to invoice your clients v
 
 == Changelog ==
 
-= 2.0 =
+= 0.3 =
+* Use country name instead of country code
+
+= 0.2 =
 * Several fixes and general cleanup
 
-= 1.0 =
+= 0.1 =
 * Initial release.

@@ -100,8 +100,8 @@ if (is_woocommerce_active()) {
 		function wc_ie_create_invoice() {
 			$checked = (get_option('wc_ie_create_invoice')==1) ? 'checked="checked"' : '';
 			echo '<input type="hidden" name="wc_ie_create_invoice" value="0" />';
-			echo '<input type="checkbox" name="wc_ie_create_invoice" id="wc_ie_create_invoice" value="1" '.$checked.' />';
-			echo ' <label for="wc_ie_create_invoice">Create invoices for orders that come in, otherwise only the client is created (<i>recommended</i>).</label>';
+			echo '<input type="checkbox" name="wc_ie_create_invoice" id="wc_ie_create_invoice" disabled value="1" '.$checked.' />';
+			echo ' <label for="wc_ie_create_invoice">Create invoices for orders when order status changes to "processing".</label>';
 		}
 		function wc_ie_send_invoice() {
 			$checked = (get_option('wc_ie_send_invoice')==1) ? 'checked="checked"' : '';
@@ -143,58 +143,36 @@ if (is_woocommerce_active()) {
 			$countries_list = $countries->countries;
 			$country = $countries_list[$order->billing_country];
 			
-			// Lets get the user's InvoiceXpress data
-			if($client_id == '') {
-				$data = array(
-						'client' => array(
-								'name'			=> $client_name,
-								'email'			=> $order->billing_email,
-								'phone'			=> $order->billing_phone,
-								'address'		=> $order->billing_address_1."\n".
-												   $order->billing_address_2."\n",								
-								'postal_code'	=> $order->billing_postcode . " - " . $order->billing_city,
-								'country'		=> $country,
-								'send_options'	=> 1
-						),
-				);
-				//error_log("clients.create");
-
-				$client = new InvoiceXpressRequest('clients.create');
-				$client->post($data);
-				$client->request();
-				if($client->success()) {
-					$response = $client->getResponse();
-					$client_id = $response['id'];
-					$order->add_order_note(__('Client created in InvoiceXpress','wc_invoicexpress').' #'.$client_id);
-					update_user_meta($order->user_id,'wc_ie_client_id',$client_id);
-				} else {
-					$order->add_order_note(__('InvoiceXpress Client (Create) API Error','wc_invoicexpress').': '.$client->getError());
-				}
-			} else {
-				$client = new InvoiceXpressRequest('clients.get');
-				$client->post($data);
-				$client->request($client_id);
-				
-				if($client->success()) {
-					$response = $client->getResponse();
-					$client_id = $response['id'];
-				} else {
-					$client_id = '';
-					$order->add_order_note(__('InvoiceXpress Client (Get) API Error','wc_invoicexpress').': '.$client->getError());
-				}
-			}
+			$client_email = $order->billing_email;
 			
-			if(intval($client_id) > 0) {
-				if(get_option('wc_ie_create_invoice')==1) {
-					foreach($order->get_items() as $item) {						
-						$pid = $item['item_meta']['_product_id'][0];
+			$billing_address = $order->billing_address_1;
+			if(isset($order->billing_address_2))
+				$billing_address = $billing_address."\n".$order->billing_address_2."\n";	
+			
+			// Lets get the user's InvoiceXpress data
+			$client_data = array(
+						'name'			=> $client_name. " (".$client_email.")",
+						'email'			=> $client_email,
+						'phone'			=> $order->billing_phone,
+						'address'		=> $billing_address,	
+			//			'fiscal_id'		=> $vat,					
+						'postal_code'	=> $order->billing_postcode . " - " . $order->billing_city,
+						'country'		=> $country,
+						'send_options'	=> 1
+				);
+		
+		
+			//if(get_option('wc_ie_create_invoice')==1) no need to do this check
+				
+			foreach($order->get_items() as $item) {						
+
+					$pid = $item['item_meta']['_product_id'][0];
+					$prod = get_product($pid);
 						
-						$prod = get_product($pid);
-						
-						$items[] = array(
+					$items[] = array(
 								'name'			=> $item['name'],
 								'description'	=> '('.$item['qty'].') '.$item['name'],
-								'unit_price'		=> $prod->price,
+								'unit_price'		=> $item['line_total'],
 								'quantity'		=> $item['qty'],
 								'unit'			=> 'unit',
 								'tax'			=> array(
@@ -203,57 +181,60 @@ if (is_woocommerce_active()) {
 						);
 					}	
 					
-					if(get_option('wc_ie_create_simplified_invoice')==1) {
-						$data = array(
-								'simplified_invoice' => array(
-										'date'	=> $order->completed_date,
-										'client' => array( 'name' => $client_name, 'code' => $client_id ),
-										'items'		=> array(
+			if(get_option('wc_ie_create_simplified_invoice')==1) {
+
+				$data = array(
+							'simplified_invoice' => array(
+							'date'	=> $order->completed_date,
+							'client' => $client_data,
+							'items'		=> array(
 												'item'	=> $items
+											)
 										)
-								)
-						);
-					} else {
-						$data = array(
+							);
+					
+				$invoice = new InvoiceXpressRequest('simplified_invoices.create');
+					
+				} else {
+
+					$data = array(
 								'invoice' => array(
-										'date'	=> $order->completed_date,
-										'client' => array( 'name' => $client_name, 'code' => $client_id ),
-										'items'		=> array(
+								'date'	=> $order->completed_date,
+								'client' => $client_data,
+								'items'		=> array(
 												'item'	=> $items
-										)
-								)
+												)
+											)
 						);
-					}
-										
-					if(get_option('wc_ie_create_simplified_invoice')==1) {
-						$invoice = new InvoiceXpressRequest('simplified_invoices.create');						
-					} else {
-						$invoice = new InvoiceXpressRequest('invoices.create');
-					}
-		
-					$invoice->post($data);
-					$invoice->request();
-					if($invoice->success()) {
-						$response = $invoice->getResponse();
-						$invoice_id = $response['id'];
-						$order->add_order_note(__('Client invoice in InvoiceXpress','wc_invoicexpress').' #'.$invoice_id);
-						add_post_meta($order_id, 'wc_ie_inv_num', $invoice_id, true);
 						
-						// extra request to change status to final
-						if(get_option('wc_ie_create_simplified_invoice')==1) {
-							$invoice = new InvoiceXpressRequest('simplified_invoices.change-state');
-						} else {
-							$invoice = new InvoiceXpressRequest('invoices.change-state');
-						}
-						$data = array('invoice' => array('state'	=> 'finalized'));
-						$invoice->post($data);
-						$invoice->request($invoice_id);
-						
-					} else {
-						$order->add_order_note(__('InvoiceXpress Invoice API Error:','wc_invoicexpress').': '.$invoice->getError());
-					}
+					$invoice = new InvoiceXpressRequest('invoices.create');
 				}
+										
+				//generate invoice		
+				$invoice->post($data);
+				$invoice->request();
+					
+				if($invoice->success()) {
+					$response = $invoice->getResponse();
+					$invoice_id = $response['id'];
+					$order->add_order_note(__('Client invoice in InvoiceXpress','wc_invoicexpress').' #'.$invoice_id);
+					add_post_meta($order_id, 'wc_ie_inv_num', $invoice_id, true);
+						
+					// extra request to change status to final
+					if(get_option('wc_ie_create_simplified_invoice')==1) {
+						$invoice = new InvoiceXpressRequest('simplified_invoices.change-state');
+					} else {
+						$invoice = new InvoiceXpressRequest('invoices.change-state');
+					}
+					$data = array('invoice' => array('state'	=> 'finalized'));
+					$invoice->post($data);
+					$invoice->request($invoice_id);
+						
+				} else {
+					$order->add_order_note(__('InvoiceXpress Invoice API Error:','wc_invoicexpress').': '.$invoice->getError());
+					}
 				
+				// Send invoice to client
 				if(get_option('wc_ie_send_invoice')==1 && isset($invoice_id)) {
 					$data = array(
 							'message' => array(
@@ -280,10 +261,8 @@ if (is_woocommerce_active()) {
 					} else {
 						$order->add_order_note(__('InvoiceXpress Send Invoice API Error','wc_invoicexpress').': '.$send_invoice->getError());
 					}
-				}
-				
-			}
-		}
+				}// end send invoice to client						
+		}// process
 		
 	}
 }

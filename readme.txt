@@ -25,5 +25,15 @@ The InvoiceXpress Extension for WooCommerce allows you to invoice your clients v
 
 == Changelog ==
 
-= 1.0 =
+= 0.4 =
+* Fixed Bug same buyer without account on website couldn't get second invoice.
+* Fixed Bug that was preventing address to be included on invoice
+
+= 0.3 =
+* Use country name instead of country code
+
+= 0.2 =
+* Several fixes and general cleanup
+
+= 0.1 =
 * Initial release.

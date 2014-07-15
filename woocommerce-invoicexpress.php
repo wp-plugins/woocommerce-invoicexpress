@@ -3,7 +3,7 @@
  Plugin Name: WooCommerce InvoiceXpress Extension
 Plugin URI: http://woothemes.com/woocommerce
 Description: Automatically create InvoiceXpress invoices when sales are made.
-Version: 0.3
+Version: 0.5
 Author: WidgiLabs
 Author URI: http://www.widgilabs.com
 License: GPLv2

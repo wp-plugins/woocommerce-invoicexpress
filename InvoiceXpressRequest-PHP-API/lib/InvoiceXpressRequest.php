@@ -27,7 +27,7 @@ class InvoiceXpressRequest {
 	 * The API url we're hitting. {{ DOMAIN }} will get replaced with $domain
 	* when you set InvoiceXpressRequest::init($domain, $token)
 	*/
-	protected $_api_url = 'https://{{ DOMAIN }}.invoicexpress.net/{{ CLASS }}.xml';
+	protected $_api_url = 'https://{{ DOMAIN }}.invoicexpress.com/{{ CLASS }}.xml';
 	
 	/*
 	 * Stores the current method we're using. Example:
@@ -133,6 +133,8 @@ class InvoiceXpressRequest {
 		$dom->fromMixed($this->_args);
 		$post_data = $dom->saveXML();
 	
+		$post_data = str_replace('<?xml version="1.0" encoding="utf-8"?>', '', $post_data);
+
 		return $post_data;
 	
 	}

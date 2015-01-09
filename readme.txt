@@ -2,7 +2,7 @@
 Contributors: nunomorgadinho, aaires, widgilabs
 Tags: woocommerce, invoice, invoicing, invoicexpress, ecommerce
 Requires at least: 3.0
-Tested up to: 3.9
+Tested up to: 4.2
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -24,6 +24,11 @@ The InvoiceXpress Extension for WooCommerce allows you to invoice your clients v
 1. WooCommerce-InvoiceXpress Settings.
 
 == Changelog ==
+
+= 0.6 =
+* Update the API endpoint to .com
+* Include due date on invoice since it now seems to be mandatory
+* Remove inicial XML block which isn't needed
 
 = 0.5 =
 * Remove class-woothemes-plugin-updater.php from the plugin

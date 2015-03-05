@@ -3,7 +3,7 @@
  Plugin Name: WooCommerce InvoiceXpress Extension
 Plugin URI: http://woothemes.com/woocommerce
 Description: Automatically create InvoiceXpress invoices when sales are made.
-Version: 0.8
+Version: 0.9
 Author: WidgiLabs
 Author URI: http://www.widgilabs.com
 License: GPLv2
@@ -198,7 +198,7 @@ if (is_woocommerce_active()) {
 				}
 				// divide the value of shipping per 1.23 so that when
 				// invoicexpress calculates the tax is correct
-				$shipping_unit_price = 	$order->get_shipping() / 1.23;
+				$shipping_unit_price = 	$order->get_total_shipping() / 1.23;
 				$items[] = array(
 						'name'			=> 'Envio',
 						'description'	=> 'Custos de Envio',

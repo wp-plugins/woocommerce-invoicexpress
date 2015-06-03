@@ -169,6 +169,9 @@ class InvoiceXpressRequest {
 		} elseif ($class[0] == "simplified_invoices" && $class[1] == "get") {
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
 			$url = str_replace('{{ CLASS }}', "simplified_invoices/".$id, $url);
+		} elseif ($class[0] == "top-clients" && $class[1] == "get") {
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+			$url = str_replace('{{ CLASS }}', "api/charts/".$class[0], $url);
 		} else {
 			$url = str_replace('{{ CLASS }}', $class[0], $url);
 			curl_setopt($ch, CURLOPT_POST, 1);
